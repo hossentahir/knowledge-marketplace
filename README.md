@@ -54,24 +54,55 @@ npm run dev
 1. Start the backend: `cd server && npm start`
 2. Start the frontend: `cd client && npm run dev`
 3. Open the dev URL (e.g. http://localhost:5173)
-4. Click "Fetch Health" to verify the API connection
+
+### Frontend routes
+
+- `/login` – Login form (redirects to student/teacher dashboard based on role)
+- `/register` – Register as student or teacher
+- `/student/dashboard` – Protected student dashboard
+- `/teacher/dashboard` – Protected teacher dashboard (create expertise)
+- `/search` – Public expertise search + “Request Topic”
+
+### Teacher flow
+
+1. Register as a **teacher** and log in.
+2. Go to `/teacher/dashboard`.
+3. Use the form to create expertise (title, description, price).
+
+### Student flow
+
+1. Register as a **student** and log in.
+2. Go to `/search`.
+3. Search by topic title.
+4. See expertise results with teacher name and price.
+5. Click **“Request Topic”** to send a topic request to the teacher.
 
 ## Testing
 
-- **Database empty in Compass?** MongoDB creates databases when you first insert data. Register a user via the API first.
-- **Quick test:** With the server running, run:
+- **Database empty in Compass?** MongoDB creates databases when you first insert data. Register a user or create expertise first.
+- **Quick API smoke test:** With the server running, you can still use:
   ```bash
   cd server && node scripts/test-api.js
   ```
-  This registers a test user and creates the database.
+- **Test teacher expertise and topic requests:**
+  ```bash
+  cd server && node scripts/test-expertise.js
+  ```
 
 ## API
 
-| Endpoint               | Method | Description                                   |
-|------------------------|--------|-----------------------------------------------|
-| `/api/health`          | GET    | Returns `{ message: "Backend is running" }`    |
-| `/api/auth/register`   | POST   | Register user (name, email, password, role)    |
-| `/api/auth/login`      | POST   | Login, returns JWT token and user role         |
+| Endpoint                             | Method | Auth         | Description                                                       |
+|--------------------------------------|--------|-------------|-------------------------------------------------------------------|
+| `/api/health`                        | GET    | Public      | Returns `{ message: "Backend is running" }`                       |
+| `/api/auth/register`                 | POST   | Public      | Register user (name, email, password, role: `student`/`teacher`)  |
+| `/api/auth/login`                    | POST   | Public      | Login, returns JWT token, user info, and role                     |
+| `/api/dashboard/student`             | GET    | Student JWT | Example protected student route                                   |
+| `/api/dashboard/teacher`             | GET    | Teacher JWT | Example protected teacher route                                   |
+| `/api/expertise`                     | POST   | Teacher JWT | Create expertise (title, description, price)                      |
+| `/api/expertise/search?query=`       | GET    | Public      | Search expertise by title, populates teacher name & email         |
+| `/api/topic-requests`                | POST   | Student JWT | Create topic request for a given `expertiseId`                    |
+| `/api/topic-request/teacher`         | GET    | Teacher JWT | List topic requests for the logged-in teacher                     |
+| `/api/topic-request/:id`             | PATCH  | Teacher JWT | Update topic request status (`accepted` / `rejected`)             |
 
 ## What to Do Now
 
@@ -80,20 +111,17 @@ npm run dev
    - Terminal 2: `cd client && npm run dev`
    - Open http://localhost:5173
 
-2. **Register**
-   - Click "Register" in the app
-   - Enter name, email, password
-   - Choose role: Student or Teacher
-   - Submit
+2. **Create a teacher**
+   - Go to `/register`
+   - Register with role **Teacher**
+   - Log in and open `/teacher/dashboard`
+   - Create a few expertise items
 
-3. **Login**
-   - Enter your email and password
-   - Click Login
-   - JWT is saved in localStorage; you'll see a success message
+3. **Create a student and request topics**
+   - Register with role **Student**
+   - Log in and open `/search`
+   - Search for a topic and click **“Request Topic”**
 
-4. **Next steps (ideas)**
-   - Add protected routes that require the JWT
-   - Add a logout button that clears localStorage
-   - Build teacher-only features (e.g. create courses)
-   - Build student-only features (e.g. view/enroll in courses)
-   - Add a profile page that shows the logged-in user
+4. **Review requests as teacher**
+   - As the teacher, call `GET /api/topic-request/teacher` with your JWT (or add a UI later) to see pending topic requests.
+

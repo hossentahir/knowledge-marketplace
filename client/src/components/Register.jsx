@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 
-export default function Register({ onSuccess, onSwitchToLogin }) {
+export default function Register() {
+  const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -20,7 +22,7 @@ export default function Register({ onSuccess, onSwitchToLogin }) {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || 'Registration failed')
-      onSuccess?.(data)
+      navigate('/login')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -61,7 +63,7 @@ export default function Register({ onSuccess, onSwitchToLogin }) {
       </button>
       {error && <p className="error">{error}</p>}
       <p className="form-switch">
-        Already have an account? <button type="button" onClick={onSwitchToLogin}>Login</button>
+        Already have an account? <Link to="/login">Login</Link>
       </p>
     </form>
   )

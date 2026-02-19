@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 
-export default function Login({ onSuccess, onSwitchToRegister }) {
+export default function Login() {
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -20,7 +22,8 @@ export default function Login({ onSuccess, onSwitchToRegister }) {
       if (!res.ok) throw new Error(data.message || 'Login failed')
       localStorage.setItem('token', data.token)
       localStorage.setItem('user', JSON.stringify(data.user))
-      onSuccess?.(data)
+      const path = data.user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'
+      navigate(path)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -50,7 +53,7 @@ export default function Login({ onSuccess, onSwitchToRegister }) {
       </button>
       {error && <p className="error">{error}</p>}
       <p className="form-switch">
-        Don't have an account? <button type="button" onClick={onSwitchToRegister}>Register</button>
+        Don't have an account? <Link to="/register">Register</Link>
       </p>
     </form>
   )

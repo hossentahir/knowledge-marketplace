@@ -58,24 +58,21 @@ export default function StudentDashboard() {
       {error && <p className="error">{error}</p>}
       {loading && <p>Loading expertise...</p>}
 
-      <div style={{ marginTop: '1.5rem', textAlign: 'left' }}>
+      <div className="dashboard-list">
         {expertise.map((item) => (
-          <div
-            key={item._id}
-            style={{
-              border: '1px solid #444',
-              borderRadius: '8px',
-              padding: '1rem',
-              marginBottom: '1rem',
-            }}
-          >
-            <h3 style={{ margin: '0 0 0.5rem' }}>{item.title}</h3>
-            <p style={{ margin: '0 0 0.25rem' }}>
+          <div key={item._id} className="dashboard-card">
+            <h3>{item.title}</h3>
+            <p>
               <strong>Teacher:</strong> {item.teacher?.name} ({item.teacher?.email})
             </p>
-            <p style={{ margin: '0 0 0.5rem' }}>
+            <p>
               <strong>Price:</strong> ${item.price}
             </p>
+            {item.description && (
+              <p>
+                <strong>About:</strong> {item.description}
+              </p>
+            )}
             <button type="button" onClick={() => handleRequestTopic(item._id)}>
               Request Topic
             </button>

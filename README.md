@@ -72,10 +72,10 @@ npm run dev
 ### Student flow
 
 1. Register as a **student** and log in.
-2. Go to `/search`.
-3. Search by topic title.
-4. See expertise results with teacher name and price.
-5. Click **“Request Topic”** to send a topic request to the teacher.
+2. Open `/student/dashboard` to see **all available expertise** in a responsive card grid.
+3. Or go to `/search` to search expertise by topic title.
+4. See expertise results with teacher name, email, price, and description.
+5. Click **“Request Topic”** from either the student dashboard or search page to send a topic request to the teacher.
 
 ## Testing
 
@@ -119,8 +119,8 @@ npm run dev
 
 3. **Create a student and request topics**
    - Register with role **Student**
-   - Log in and open `/search`
-   - Search for a topic and click **“Request Topic”**
+   - Log in and open `/student/dashboard` to browse all expertise
+   - Optionally use `/search` to filter by topic and click **“Request Topic”**
 
 4. **Review requests as teacher**
    - As the teacher, call `GET /api/topic-request/teacher` with your JWT (or add a UI later) to see pending topic requests.

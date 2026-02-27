@@ -100,22 +100,26 @@ router.patch('/:id', auth, authorize('teacher'), async (req, res) => {
         .json({ message: 'Topic request not found or not owned by this teacher' });
     }
 
+    let conversationId = null;
+
     // Create conversation only when the request is accepted.
     if (status === 'accepted') {
-      await Conversation.findOneAndUpdate(
+      const conversation = await Conversation.findOneAndUpdate(
         { topicRequest: topicRequest._id },
         {
           topicRequest: topicRequest._id,
-          student: topicRequest.student,
+          student: topicRequest.student?._id || topicRequest.student,
           teacher: topicRequest.teacher,
         },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
+      conversationId = conversation._id;
     }
 
     res.json({
       message: 'Topic request updated successfully',
       topicRequest,
+      conversationId,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });

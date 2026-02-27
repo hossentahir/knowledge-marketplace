@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 export default function TeacherDashboard() {
   const [title, setTitle] = useState('')
@@ -284,6 +285,11 @@ export default function TeacherDashboard() {
                     <span className={`status-badge ${req.status === 'accepted' ? 'status-accepted' : 'status-rejected'}`}>
                       {req.status}
                     </span>
+                    {req.status === 'accepted' && req.conversationId && (
+                      <Link to={`/chat/${req.conversationId}`} className="btn btn-outline btn-sm">
+                        Open chat
+                      </Link>
+                    )}
                   </div>
                 </div>
               ))}

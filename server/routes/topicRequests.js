@@ -6,6 +6,22 @@ const Conversation = require('../models/Conversation');
 
 const router = express.Router();
 
+const attachConversationIds = async (requests) => {
+  const topicRequestIds = requests.map((request) => request._id);
+  const conversations = await Conversation.find({ topicRequest: { $in: topicRequestIds } })
+    .select('_id topicRequest')
+    .lean();
+
+  const conversationMap = new Map(
+    conversations.map((conversation) => [String(conversation.topicRequest), String(conversation._id)])
+  );
+
+  return requests.map((request) => ({
+    ...request,
+    conversationId: conversationMap.get(String(request._id)) || null,
+  }));
+};
+
 // POST /api/topic-requests
 // Body: { expertiseId }
 // Only students can create topic requests
@@ -67,7 +83,25 @@ router.get('/teacher/history', auth, authorize('teacher'), async (req, res) => {
       .sort({ _id: -1 })
       .lean();
 
-    res.json(requests);
+    const requestsWithConversation = await attachConversationIds(requests);
+    res.json(requestsWithConversation);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/topic-request/student/history
+// Only students can view their request history
+router.get('/student/history', auth, authorize('student'), async (req, res) => {
+  try {
+    const requests = await TopicRequest.find({ student: req.user.id })
+      .populate('teacher', 'name email')
+      .populate('expertise', 'title price')
+      .sort({ _id: -1 })
+      .lean();
+
+    const requestsWithConversation = await attachConversationIds(requests);
+    res.json(requestsWithConversation);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

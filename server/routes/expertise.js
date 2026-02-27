@@ -27,7 +27,8 @@ router.post('/', auth, authorize('teacher'), async (req, res) => {
 });
 
 // GET /api/expertise/search?query=
-router.get('/search', async (req, res) => {
+// Only students can search teacher expertise
+router.get('/search', auth, authorize('student'), async (req, res) => {
   try {
     const { query } = req.query;
 

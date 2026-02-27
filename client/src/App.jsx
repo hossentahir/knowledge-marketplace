@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import Navbar from './components/Navbar'
 import Login from './components/Login'
 import Register from './components/Register'
 import StudentDashboard from './components/StudentDashboard'
@@ -9,12 +10,14 @@ import './App.css'
 
 function App() {
   return (
-    <div className="app">
-      <h1>Teacher-Student</h1>
+    <div className="page">
+      <Navbar />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/search" element={<SearchPage />} />
+        <Route element={<ProtectedRoute allowedRoles={['student']} />}>
+          <Route path="/search" element={<SearchPage />} />
+        </Route>
         <Route element={<ProtectedRoute />}>
           <Route path="/student/dashboard" element={<StudentDashboard />} />
           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />

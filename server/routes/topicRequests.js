@@ -41,9 +41,29 @@ router.post('/', auth, authorize('student'), async (req, res) => {
 // Only teachers can view their topic requests
 router.get('/teacher', auth, authorize('teacher'), async (req, res) => {
   try {
-    const requests = await TopicRequest.find({ teacher: req.user.id })
+    const requests = await TopicRequest.find({ teacher: req.user.id, status: 'pending' })
       .populate('student', 'name email')
       .populate('expertise', 'title price')
+      .sort({ _id: -1 })
+      .lean();
+
+    res.json(requests);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/topic-request/teacher/history
+// Only teachers can view processed request history
+router.get('/teacher/history', auth, authorize('teacher'), async (req, res) => {
+  try {
+    const requests = await TopicRequest.find({
+      teacher: req.user.id,
+      status: { $in: ['accepted', 'rejected'] },
+    })
+      .populate('student', 'name email')
+      .populate('expertise', 'title price')
+      .sort({ _id: -1 })
       .lean();
 
     res.json(requests);

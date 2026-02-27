@@ -6,6 +6,7 @@ import StudentDashboard from './components/StudentDashboard'
 import TeacherDashboard from './components/TeacherDashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 import SearchPage from './components/SearchPage'
+import ChatPage from './components/ChatPage'
 import './App.css'
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/student/dashboard" element={<StudentDashboard />} />
           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+          <Route path="/chat/:conversationId" element={<ChatPage />} />
         </Route>
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>

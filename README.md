@@ -1,6 +1,14 @@
 # Teacher-Student
 
-A minimal full-stack app with an Express.js backend and React frontend.
+A role-based full-stack platform where students request topics from teachers, teachers accept/reject requests, and accepted requests open a chat conversation.
+
+## Project Overview
+
+- **Frontend:** React + Vite
+- **Backend:** Express + Mongoose
+- **Auth:** JWT (Bearer token)
+- **Roles:** `student`, `teacher`
+- **Core flow:** register/login -> teacher posts expertise -> student requests topic -> teacher accepts -> conversation is created -> participants exchange messages
 
 ## Project Structure
 
@@ -60,8 +68,9 @@ npm run dev
 - `/login` – Login form (redirects to student/teacher dashboard based on role)
 - `/register` – Register as student or teacher
 - `/student/dashboard` – Protected student dashboard
-- `/teacher/dashboard` – Protected teacher dashboard (create expertise)
-- `/search` – Public expertise search + “Request Topic”
+- `/teacher/dashboard` – Protected teacher dashboard (create expertise + pending/history requests)
+- `/search` – **Protected student-only** expertise search + “Request Topic”
+- `/chat/:conversationId` – Protected chat page for student/teacher participants
 
 ### Teacher flow
 
@@ -72,10 +81,10 @@ npm run dev
 ### Student flow
 
 1. Register as a **student** and log in.
-2. Open `/student/dashboard` to see **all available expertise** in a responsive card grid.
-3. Or go to `/search` to search expertise by topic title.
-4. See expertise results with teacher name, email, price, and description.
-5. Click **“Request Topic”** from either the student dashboard or search page to send a topic request to the teacher.
+2. Open `/student/dashboard` to see available expertise.
+3. Use `/search` (student-only) to search by topic.
+4. Click **Request Topic** to send request to teacher.
+5. After acceptance, open `/chat/:conversationId` to exchange messages.
 
 ## Testing
 
@@ -91,18 +100,21 @@ npm run dev
 
 ## API
 
-| Endpoint                             | Method | Auth         | Description                                                       |
-|--------------------------------------|--------|-------------|-------------------------------------------------------------------|
-| `/api/health`                        | GET    | Public      | Returns `{ message: "Backend is running" }`                       |
-| `/api/auth/register`                 | POST   | Public      | Register user (name, email, password, role: `student`/`teacher`)  |
-| `/api/auth/login`                    | POST   | Public      | Login, returns JWT token, user info, and role                     |
-| `/api/dashboard/student`             | GET    | Student JWT | Example protected student route                                   |
-| `/api/dashboard/teacher`             | GET    | Teacher JWT | Example protected teacher route                                   |
-| `/api/expertise`                     | POST   | Teacher JWT | Create expertise (title, description, price)                      |
-| `/api/expertise/search?query=`       | GET    | Public      | Search expertise by title, populates teacher name & email         |
-| `/api/topic-requests`                | POST   | Student JWT | Create topic request for a given `expertiseId`                    |
-| `/api/topic-request/teacher`         | GET    | Teacher JWT | List topic requests for the logged-in teacher                     |
-| `/api/topic-request/:id`             | PATCH  | Teacher JWT | Update topic request status (`accepted` / `rejected`)             |
+| Endpoint                              | Method | Auth         | Description                                                                 |
+|---------------------------------------|--------|--------------|-----------------------------------------------------------------------------|
+| `/api/health`                         | GET    | Public       | Returns backend health message                                               |
+| `/api/auth/register`                  | POST   | Public       | Register user (`name`, `email`, `password`, `role`)                         |
+| `/api/auth/login`                     | POST   | Public       | Login and return JWT + user payload                                          |
+| `/api/dashboard/student`              | GET    | Student JWT  | Example protected student route                                              |
+| `/api/dashboard/teacher`              | GET    | Teacher JWT  | Example protected teacher route                                              |
+| `/api/expertise`                      | POST   | Teacher JWT  | Create expertise (`title`, `description`, `price`)                          |
+| `/api/expertise/search?query=`        | GET    | Student JWT  | Search expertise by title (student only)                                    |
+| `/api/topic-requests`                 | POST   | Student JWT  | Create topic request for an `expertiseId`                                   |
+| `/api/topic-request/teacher`          | GET    | Teacher JWT  | Get **pending** requests for logged-in teacher                              |
+| `/api/topic-request/teacher/history`  | GET    | Teacher JWT  | Get accepted/rejected request history for logged-in teacher                 |
+| `/api/topic-request/:id`              | PATCH  | Teacher JWT  | Accept/reject request; creates Conversation when accepted; returns `conversationId` |
+| `/api/messages`                       | POST   | JWT          | Send message (`conversationId`, `text`) with sender from JWT                |
+| `/api/messages/:conversationId`       | GET    | JWT          | Get all conversation messages sorted by `createdAt` (participants only)     |
 
 ## What to Do Now
 
@@ -123,5 +135,19 @@ npm run dev
    - Optionally use `/search` to filter by topic and click **“Request Topic”**
 
 4. **Review requests as teacher**
-   - As the teacher, call `GET /api/topic-request/teacher` with your JWT (or add a UI later) to see pending topic requests.
+   - In `/teacher/dashboard`, accept/reject pending requests.
+   - Toggle **View history** to see processed requests.
+
+5. **Chat after acceptance**
+   - When a request is accepted, backend creates a `Conversation`.
+   - Use returned `conversationId` from `PATCH /api/topic-request/:id`.
+   - Open `/chat/:conversationId` and exchange messages.
+
+## Troubleshooting (Why it may not work as expected)
+
+- Restart backend after route/model changes: `cd server && npm start`
+- Use the latest JWT (log out and log in again if role/token changed)
+- `/search` is student-only now; teacher accounts will be redirected
+- Chat requires a real `conversationId` from an **accepted** topic request
+- If chat opens with no ID, route must be `/chat/<conversationId>`
 

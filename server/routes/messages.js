@@ -5,6 +5,36 @@ const Message = require('../models/Message');
 
 const router = express.Router();
 
+// GET /api/messages/:conversationId
+// Protected: only conversation participants can read messages
+router.get('/:conversationId', auth, async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+
+    const conversation = await Conversation.findById(conversationId).lean();
+    if (!conversation) {
+      return res.status(404).json({ message: 'Conversation not found' });
+    }
+
+    const requesterId = String(req.user.id);
+    const isParticipant =
+      String(conversation.student) === requesterId || String(conversation.teacher) === requesterId;
+
+    if (!isParticipant) {
+      return res.status(403).json({ message: 'You are not part of this conversation' });
+    }
+
+    const messages = await Message.find({ conversation: conversationId })
+      .populate('sender', 'name email role')
+      .sort({ createdAt: 1 })
+      .lean();
+
+    res.json(messages);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // POST /api/messages
 // Body: { conversationId, text }
 // Protected: sender is inferred from JWT

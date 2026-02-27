@@ -27,6 +27,7 @@ app.use('/api/expertise', require('./routes/expertise'));
 app.use('/api/topic-requests', require('./routes/topicRequests'));
 app.use('/api/topic-request', require('./routes/topicRequests'));
 app.use('/api/messages', require('./routes/messages'));
+app.use('/api/conversations', require('./routes/conversations'));
 
 app.get('/api/health', (req, res) => {
   res.json({ message: 'Backend is running' });

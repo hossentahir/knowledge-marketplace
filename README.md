@@ -1,153 +1,178 @@
-# Teacher-Student
+# TeacherConnect
 
-A role-based full-stack platform where students request topics from teachers, teachers accept/reject requests, and accepted requests open a chat conversation.
+A role-based full-stack platform where teachers publish expertise, students request sessions, and both sides chat once a request is accepted.
 
 ## Project Overview
 
-- **Frontend:** React + Vite
-- **Backend:** Express + Mongoose
-- **Auth:** JWT (Bearer token)
-- **Roles:** `student`, `teacher`
-- **Core flow:** register/login -> teacher posts expertise -> student requests topic -> teacher accepts -> conversation is created -> participants exchange messages
+- **Frontend:** React 19 + Vite 7 + React Router 7
+- **Backend:** Node.js + Express 5
+- **Database:** MongoDB (Mongoose 9)
+- **Auth:** JWT Bearer tokens (7-day expiry, bcrypt passwords)
+- **Security:** Helmet middleware + role-based route guards
+
+---
+
+## Core User Flow
+
+```
+Teacher registers → posts expertise
+Student registers → browses / searches expertise → sends topic request
+Teacher accepts request → Conversation auto-created → both land in chat
+Teacher / Student exchange messages in real-time chat UI
+```
+
+---
 
 ## Project Structure
 
 ```
-├── server/     # Express.js API (port 5000)
-└── client/     # Vite + React app
+teacher-student/
+├── client/                        # React frontend (Vite, port 5173)
+│   └── src/
+│       ├── components/
+│       │   ├── Login.jsx
+│       │   ├── Register.jsx
+│       │   ├── Navbar.jsx
+│       │   ├── ProtectedRoute.jsx
+│       │   ├── StudentDashboard.jsx
+│       │   ├── TeacherDashboard.jsx
+│       │   ├── SearchPage.jsx
+│       │   └── ChatPage.jsx
+│       ├── App.jsx
+│       └── App.css / index.css
+│
+└── server/                        # Express API (port 5000)
+    ├── config/db.js
+    ├── middleware/auth.js
+    ├── models/
+    │   ├── User.js
+    │   ├── Expertise.js
+    │   ├── TopicRequest.js
+    │   ├── Conversation.js
+    │   └── Message.js
+    └── routes/
+        ├── auth.js
+        ├── dashboard.js
+        ├── expertise.js
+        ├── topicRequests.js
+        ├── conversations.js
+        └── messages.js
 ```
+
+---
 
 ## Setup
 
-### 1. MongoDB (choose one)
+### 1. MongoDB
 
-**Option A: MongoDB Atlas (recommended, no local install)**
-
-1. Go to [cloud.mongodb.com](https://cloud.mongodb.com) and create a free account
-2. Create a free cluster
-3. Database Access → Add User → create username/password
-4. Network Access → Add IP → allow `0.0.0.0` (or your IP)
-5. Connect → Drivers → copy the connection string
-6. In `server/.env`, set:
+**Option A — Atlas (recommended)**
+1. Go to [cloud.mongodb.com](https://cloud.mongodb.com), create a free cluster
+2. Add a DB user and whitelist your IP
+3. Copy the connection string into `server/.env`:
    ```
    MONGO_URI=mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/teacher-student
    ```
-   Replace `<user>`, `<password>`, and the cluster URL with your values.
 
-**Option B: Local MongoDB**
+**Option B — Local**
+```
+MONGO_URI=mongodb://localhost:27017/teacher-student
+```
 
-- Install [MongoDB Community](https://www.mongodb.com/try/download/community)
-- Start MongoDB service
-- Default `.env` uses `mongodb://localhost:27017/teacher-student`
+### 2. server/.env
+```
+MONGO_URI=...
+JWT_SECRET=your-strong-secret-here
+```
 
-### 2. Backend
-
+### 3. Start backend
 ```bash
 cd server
 npm install
-# Copy .env.example to .env and set MONGO_URI
-npm start
+npm start        # runs on http://localhost:5000
 ```
 
-### 3. Frontend
-
+### 4. Start frontend
 ```bash
 cd client
 npm install
-npm run dev
+npm run dev      # runs on http://localhost:5173
 ```
 
-## Usage
+---
 
-1. Start the backend: `cd server && npm start`
-2. Start the frontend: `cd client && npm run dev`
-3. Open the dev URL (e.g. http://localhost:5173)
+## Frontend Routes
 
-### Frontend routes
+| Route | Access | Description |
+|---|---|---|
+| `/login` | Public | Sign in, redirects by role |
+| `/register` | Public | Create student or teacher account |
+| `/student/dashboard` | Student | Browse expertise + request history |
+| `/teacher/dashboard` | Teacher | Post expertise + pending requests + history |
+| `/search` | Student only | Search expertise by title |
+| `/chat/:conversationId` | Participant | Messenger chat between student and teacher |
 
-- `/login` – Login form (redirects to student/teacher dashboard based on role)
-- `/register` – Register as student or teacher
-- `/student/dashboard` – Protected student dashboard
-- `/teacher/dashboard` – Protected teacher dashboard (create expertise + pending/history requests)
-- `/search` – **Protected student-only** expertise search + “Request Topic”
-- `/chat/:conversationId` – Protected chat page for student/teacher participants
+---
 
-### Teacher flow
+## Complete User Flows
 
-1. Register as a **teacher** and log in.
-2. Go to `/teacher/dashboard`.
-3. Use the form to create expertise (title, description, price).
+### Teacher
+1. Register as **teacher** and log in
+2. `/teacher/dashboard` → fill in title, description, price → **Publish listing**
+3. Pending student requests appear in the **Pending requests** section
+4. Click **Accept** → conversation is created → **redirected to chat automatically**
+5. Click **Decline** to reject (no conversation created)
+6. Toggle **View history** to see past accepted/rejected requests and re-open chats
 
-### Student flow
+### Student
+1. Register as **student** and log in
+2. `/student/dashboard` → see available expertise, click **Request topic**
+3. Track request status in **My requests** section (pending / accepted / rejected)
+4. When request is accepted → **Open chat** button appears on the accepted card
+5. Use `/search` to find expertise by keyword and request from there too
 
-1. Register as a **student** and log in.
-2. Open `/student/dashboard` to see available expertise.
-3. Use `/search` (student-only) to search by topic.
-4. Click **Request Topic** to send request to teacher.
-5. After acceptance, open `/chat/:conversationId` to exchange messages.
+---
 
-## Testing
+## API Reference
 
-- **Database empty in Compass?** MongoDB creates databases when you first insert data. Register a user or create expertise first.
-- **Quick API smoke test:** With the server running, you can still use:
-  ```bash
-  cd server && node scripts/test-api.js
-  ```
-- **Test teacher expertise and topic requests:**
-  ```bash
-  cd server && node scripts/test-expertise.js
-  ```
+| Method | Endpoint | Auth | Role | Description |
+|---|---|---|---|---|
+| GET | `/api/health` | — | Public | Health check |
+| POST | `/api/auth/register` | — | Public | Register (`name`, `email`, `password`, `role`) |
+| POST | `/api/auth/login` | — | Public | Login → returns JWT + user |
+| GET | `/api/dashboard/student` | JWT | Student | Protected student stub |
+| GET | `/api/dashboard/teacher` | JWT | Teacher | Protected teacher stub |
+| POST | `/api/expertise` | JWT | Teacher | Create expertise listing |
+| GET | `/api/expertise/search?query=` | JWT | Student | Search expertise by title |
+| POST | `/api/topic-requests` | JWT | Student | Submit topic request |
+| GET | `/api/topic-request/teacher` | JWT | Teacher | Get pending requests |
+| GET | `/api/topic-request/teacher/history` | JWT | Teacher | Get accepted/rejected history + `conversationId` |
+| GET | `/api/topic-request/student/history` | JWT | Student | Get all student requests + `conversationId` |
+| PATCH | `/api/topic-request/:id` | JWT | Teacher | Accept/reject; creates Conversation on accept; returns `conversationId` |
+| GET | `/api/conversations/:id` | JWT | Participant | Get conversation with participant names |
+| POST | `/api/messages` | JWT | Participant | Send message (`conversationId`, `text`) |
+| GET | `/api/messages/:conversationId` | JWT | Participant | Get messages sorted by `createdAt` |
 
-## API
+---
 
-| Endpoint                              | Method | Auth         | Description                                                                 |
-|---------------------------------------|--------|--------------|-----------------------------------------------------------------------------|
-| `/api/health`                         | GET    | Public       | Returns backend health message                                               |
-| `/api/auth/register`                  | POST   | Public       | Register user (`name`, `email`, `password`, `role`)                         |
-| `/api/auth/login`                     | POST   | Public       | Login and return JWT + user payload                                          |
-| `/api/dashboard/student`              | GET    | Student JWT  | Example protected student route                                              |
-| `/api/dashboard/teacher`              | GET    | Teacher JWT  | Example protected teacher route                                              |
-| `/api/expertise`                      | POST   | Teacher JWT  | Create expertise (`title`, `description`, `price`)                          |
-| `/api/expertise/search?query=`        | GET    | Student JWT  | Search expertise by title (student only)                                    |
-| `/api/topic-requests`                 | POST   | Student JWT  | Create topic request for an `expertiseId`                                   |
-| `/api/topic-request/teacher`          | GET    | Teacher JWT  | Get **pending** requests for logged-in teacher                              |
-| `/api/topic-request/teacher/history`  | GET    | Teacher JWT  | Get accepted/rejected request history for logged-in teacher                 |
-| `/api/topic-request/:id`              | PATCH  | Teacher JWT  | Accept/reject request; creates Conversation when accepted; returns `conversationId` |
-| `/api/messages`                       | POST   | JWT          | Send message (`conversationId`, `text`) with sender from JWT                |
-| `/api/messages/:conversationId`       | GET    | JWT          | Get all conversation messages sorted by `createdAt` (participants only)     |
+## Models
 
-## What to Do Now
+| Model | Key fields |
+|---|---|
+| User | `name`, `email`, `password` (bcrypt), `role` (student/teacher) |
+| Expertise | `teacher` (ref), `title`, `description`, `price` |
+| TopicRequest | `student` (ref), `teacher` (ref), `expertise` (ref), `status` (pending/accepted/rejected) |
+| Conversation | `topicRequest` (ref, unique), `student` (ref), `teacher` (ref) |
+| Message | `conversation` (ref), `sender` (ref), `text`, `createdAt` |
 
-1. **Start the app**
-   - Terminal 1: `cd server && npm start`
-   - Terminal 2: `cd client && npm run dev`
-   - Open http://localhost:5173
+---
 
-2. **Create a teacher**
-   - Go to `/register`
-   - Register with role **Teacher**
-   - Log in and open `/teacher/dashboard`
-   - Create a few expertise items
+## Troubleshooting
 
-3. **Create a student and request topics**
-   - Register with role **Student**
-   - Log in and open `/student/dashboard` to browse all expertise
-   - Optionally use `/search` to filter by topic and click **“Request Topic”**
-
-4. **Review requests as teacher**
-   - In `/teacher/dashboard`, accept/reject pending requests.
-   - Toggle **View history** to see processed requests.
-
-5. **Chat after acceptance**
-   - When a request is accepted, backend creates a `Conversation`.
-   - Use returned `conversationId` from `PATCH /api/topic-request/:id`.
-   - Open `/chat/:conversationId` and exchange messages.
-
-## Troubleshooting (Why it may not work as expected)
-
-- Restart backend after route/model changes: `cd server && npm start`
-- Use the latest JWT (log out and log in again if role/token changed)
-- `/search` is student-only now; teacher accounts will be redirected
-- Chat requires a real `conversationId` from an **accepted** topic request
-- If chat opens with no ID, route must be `/chat/<conversationId>`
-
+| Problem | Fix |
+|---|---|
+| Backend not starting | Check `server/.env` has `MONGO_URI` and `JWT_SECRET` |
+| `/search` redirects me away | Search is student-only; log in as a student |
+| Accept button not navigating to chat | Restart server after latest changes |
+| Chat shows "Conversation not found" | The `conversationId` in the URL must come from an accepted request |
+| Student doesn't see "Open chat" | Refresh the student dashboard — history loads on mount |
+| Messages not loading | Both users must be participants of that conversation |

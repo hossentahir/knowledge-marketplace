@@ -2,6 +2,7 @@ const express = require('express');
 const { auth, authorize } = require('../middleware/auth');
 const TopicRequest = require('../models/TopicRequest');
 const Expertise = require('../models/Expertise');
+const Conversation = require('../models/Conversation');
 
 const router = express.Router();
 
@@ -97,6 +98,19 @@ router.patch('/:id', auth, authorize('teacher'), async (req, res) => {
       return res
         .status(404)
         .json({ message: 'Topic request not found or not owned by this teacher' });
+    }
+
+    // Create conversation only when the request is accepted.
+    if (status === 'accepted') {
+      await Conversation.findOneAndUpdate(
+        { topicRequest: topicRequest._id },
+        {
+          topicRequest: topicRequest._id,
+          student: topicRequest.student,
+          teacher: topicRequest.teacher,
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
     }
 
     res.json({

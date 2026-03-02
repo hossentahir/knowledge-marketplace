@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { useSocket } from '../context/SocketContext'
 
 export default function SearchPage() {
+  const { isOnline } = useSocket()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
@@ -96,12 +98,17 @@ export default function SearchPage() {
             </div>
           )}
 
-          {results.map((item) => (
+          {results.map((item) => {
+            const teacherOnline = isOnline(item.teacher?._id)
+            return (
             <div key={item._id} className="card">
               <div className="card-title">{item.title}</div>
 
               <div className="card-meta">
-                <span><strong>Teacher</strong> {item.teacher?.name}</span>
+                <span>
+                  <span className={`presence-dot ${teacherOnline ? 'online' : 'offline'}`} />
+                  <strong>Teacher</strong> {item.teacher?.name}
+                </span>
                 <span>{item.teacher?.email}</span>
               </div>
 
@@ -125,7 +132,8 @@ export default function SearchPage() {
                 )}
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

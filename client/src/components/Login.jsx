@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useSocket } from '../context/SocketContext'
 
 export default function Login() {
   const navigate = useNavigate()
+  const { connectSocket } = useSocket()
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -20,8 +23,13 @@ export default function Login() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || 'Login failed')
+
       localStorage.setItem('token', data.token)
       localStorage.setItem('user', JSON.stringify(data.user))
+
+      // Connect socket and announce presence immediately after login
+      connectSocket(data.user.id)
+
       const path = data.user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'
       navigate(path)
     } catch (err) {

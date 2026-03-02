@@ -1,8 +1,10 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useSocket } from '../context/SocketContext'
 
 export default function Navbar() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { isOnline, disconnectSocket } = useSocket()
 
   const token = localStorage.getItem('token')
   const user = JSON.parse(localStorage.getItem('user') || 'null')
@@ -14,6 +16,7 @@ export default function Navbar() {
   const dashboardPath = user?.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'
 
   const handleLogout = () => {
+    disconnectSocket()
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     navigate('/login')
@@ -32,10 +35,14 @@ export default function Navbar() {
             <Link to={dashboardPath} className="nav-link">Dashboard</Link>
             <div className="nav-divider" />
             <span className={`role-badge ${user?.role}`}>{user?.role}</span>
-            <span className="user-name">{user?.name}</span>
-            <button className="btn-ghost" onClick={handleLogout}>
-              Logout
-            </button>
+
+            {/* Current user presence dot */}
+            <span className="navbar-user">
+              <span className={`presence-dot ${isOnline(user?.id) ? 'online' : 'offline'}`} />
+              <span className="user-name">{user?.name}</span>
+            </span>
+
+            <button className="btn-ghost" onClick={handleLogout}>Logout</button>
           </>
         ) : (
           <>

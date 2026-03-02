@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useSocket } from '../context/SocketContext'
 
 export default function TeacherDashboard() {
+  const { isOnline } = useSocket()
+  const navigate = useNavigate()
+  const user = JSON.parse(localStorage.getItem('user') || 'null')
+  const token = () => localStorage.getItem('token')
+
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
@@ -13,21 +19,22 @@ export default function TeacherDashboard() {
   const [requestsLoading, setRequestsLoading] = useState(false)
   const [requestsError, setRequestsError] = useState(null)
   const [updatingId, setUpdatingId] = useState(null)
+
   const [history, setHistory] = useState([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState(null)
   const [showHistory, setShowHistory] = useState(false)
 
-  const navigate = useNavigate()
-  const user = JSON.parse(localStorage.getItem('user') || 'null')
+  // All students for presence panel
+  const [students, setStudents] = useState([])
+  const [studentsLoading, setStudentsLoading] = useState(false)
 
   const fetchRequests = async () => {
     setRequestsLoading(true)
     setRequestsError(null)
     try {
-      const token = localStorage.getItem('token')
       const res = await fetch('http://localhost:5000/api/topic-request/teacher', {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token()}` },
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || 'Failed to load topic requests')
@@ -43,9 +50,8 @@ export default function TeacherDashboard() {
     setHistoryLoading(true)
     setHistoryError(null)
     try {
-      const token = localStorage.getItem('token')
       const res = await fetch('http://localhost:5000/api/topic-request/teacher/history', {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token()}` },
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || 'Failed to load request history')
@@ -57,25 +63,37 @@ export default function TeacherDashboard() {
     }
   }
 
+  const fetchStudents = async () => {
+    setStudentsLoading(true)
+    try {
+      const res = await fetch('http://localhost:5000/api/users?role=student', {
+        headers: { Authorization: `Bearer ${token()}` },
+      })
+      const data = await res.json()
+      if (res.ok) setStudents(data)
+    } catch (_) {
+    } finally {
+      setStudentsLoading(false)
+    }
+  }
+
   useEffect(() => {
     fetchRequests()
+    fetchStudents()
   }, [])
 
   useEffect(() => {
-    if (showHistory) {
-      fetchHistory()
-    }
+    if (showHistory) fetchHistory()
   }, [showHistory])
 
   const handleUpdateRequest = async (id, status) => {
     setUpdatingId(id)
     try {
-      const token = localStorage.getItem('token')
       const res = await fetch(`http://localhost:5000/api/topic-request/${id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token()}`,
         },
         body: JSON.stringify({ status }),
       })
@@ -102,12 +120,11 @@ export default function TeacherDashboard() {
     setFormError(null)
     setFormSuccess(null)
     try {
-      const token = localStorage.getItem('token')
       const res = await fetch('http://localhost:5000/api/expertise', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token()}`,
         },
         body: JSON.stringify({ title, description, price: Number(price) }),
       })
@@ -124,7 +141,13 @@ export default function TeacherDashboard() {
     }
   }
 
-  const pendingRequests = requests
+  // Sort students: online first
+  const sortedStudents = [...students].sort((a, b) => {
+    const aOn = isOnline(a._id) ? 1 : 0
+    const bOn = isOnline(b._id) ? 1 : 0
+    return bOn - aOn
+  })
+  const onlineStudentCount = sortedStudents.filter((s) => isOnline(s._id)).length
 
   return (
     <div className="main-content">
@@ -135,55 +158,61 @@ export default function TeacherDashboard() {
         </div>
       </div>
 
-      {/* Post expertise section */}
+      {/* ── Students presence panel ── */}
+      <div className="section">
+        <p className="section-title">
+          Students
+          {onlineStudentCount > 0 && (
+            <span className="presence-count-badge">{onlineStudentCount} online</span>
+          )}
+        </p>
+
+        {studentsLoading ? (
+          <p className="loading-text">Loading students…</p>
+        ) : (
+          <div className="presence-panel">
+            {sortedStudents.length === 0 && (
+              <p className="loading-text" style={{ margin: 0 }}>No students registered yet.</p>
+            )}
+            {sortedStudents.map((student) => {
+              const online = isOnline(student._id)
+              return (
+                <div key={student._id} className={`presence-item ${online ? 'online-item' : 'offline-item'}`}>
+                  <span className={`presence-dot ${online ? 'online' : 'offline'}`} />
+                  <span className="presence-item-name">{student.name}</span>
+                  <span className="presence-item-email">{student.email}</span>
+                  {online && <span className="presence-online-label">Online</span>}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ── Post expertise ── */}
       <div className="section">
         <p className="section-title">Post new expertise</p>
-
         <div className="form-card">
           {formError   && <div className="alert alert-error">{formError}</div>}
           {formSuccess && <div className="alert alert-success">{formSuccess}</div>}
-
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label className="form-label" htmlFor="title">Title</label>
-              <input
-                id="title"
-                className="form-control"
-                type="text"
+              <input id="title" className="form-control" type="text"
                 placeholder="e.g. Advanced Python Programming"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
+                value={title} onChange={(e) => setTitle(e.target.value)} required />
             </div>
-
             <div className="form-group">
               <label className="form-label" htmlFor="description">Description</label>
-              <input
-                id="description"
-                className="form-control"
-                type="text"
+              <input id="description" className="form-control" type="text"
                 placeholder="What will students learn?"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-              />
+                value={description} onChange={(e) => setDescription(e.target.value)} required />
             </div>
-
             <div className="form-group">
               <label className="form-label" htmlFor="price">Price (USD)</label>
-              <input
-                id="price"
-                className="form-control"
-                type="number"
-                placeholder="0"
-                min="0"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                required
-              />
+              <input id="price" className="form-control" type="number" placeholder="0" min="0"
+                value={price} onChange={(e) => setPrice(e.target.value)} required />
             </div>
-
             <button className="btn btn-primary" type="submit" disabled={formLoading}>
               {formLoading ? 'Publishing…' : 'Publish listing'}
             </button>
@@ -191,28 +220,22 @@ export default function TeacherDashboard() {
         </div>
       </div>
 
-      {/* Topic requests section */}
+      {/* ── Pending requests ── */}
       <div className="section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem' }}>
           <p className="section-title" style={{ marginBottom: 0 }}>
             Pending requests
-            {pendingRequests.length > 0 && (
-              <span
-                style={{
-                  marginLeft: '0.5rem',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  background: 'var(--clr-primary-soft)',
-                  color: 'var(--clr-primary)',
-                  borderRadius: '99px',
-                  padding: '0.15em 0.6em',
-                }}
-              >
-                {pendingRequests.length}
+            {requests.length > 0 && (
+              <span style={{
+                marginLeft: '0.5rem', fontSize: '0.75rem', fontWeight: 700,
+                background: 'var(--clr-primary-soft)', color: 'var(--clr-primary)',
+                borderRadius: '99px', padding: '0.15em 0.6em',
+              }}>
+                {requests.length}
               </span>
             )}
           </p>
-          <button className="btn btn-outline btn-sm" onClick={() => setShowHistory((prev) => !prev)}>
+          <button className="btn btn-outline btn-sm" onClick={() => setShowHistory((p) => !p)}>
             {showHistory ? 'Hide history' : 'View history'}
           </button>
         </div>
@@ -222,52 +245,47 @@ export default function TeacherDashboard() {
 
         {!requestsLoading && (
           <div className="grid">
-            {pendingRequests.length === 0 && (
+            {requests.length === 0 && (
               <div className="empty-state">
                 <span className="empty-state-icon">📬</span>
                 <p>No pending requests right now.</p>
               </div>
             )}
-
-            {pendingRequests.map((req) => (
-              <div key={req._id} className="card">
-                <div className="card-title">{req.expertise?.title}</div>
-
-                <div className="card-meta">
-                  <span><strong>Student</strong> {req.student?.name}</span>
-                  <span>{req.student?.email}</span>
+            {requests.map((req) => {
+              const studentOnline = isOnline(req.student?._id)
+              return (
+                <div key={req._id} className="card">
+                  <div className="card-title">{req.expertise?.title}</div>
+                  <div className="card-meta">
+                    <span>
+                      <span className={`presence-dot ${studentOnline ? 'online' : 'offline'}`} />
+                      <strong>Student</strong> {req.student?.name}
+                    </span>
+                    <span>{req.student?.email}</span>
+                  </div>
+                  <div className="card-price">${req.expertise?.price}</div>
+                  <div className="card-footer">
+                    <span className="status-badge status-pending">{req.status}</span>
+                    <button className="btn btn-success btn-sm"
+                      onClick={() => handleUpdateRequest(req._id, 'accepted')}
+                      disabled={updatingId === req._id}>Accept</button>
+                    <button className="btn btn-danger btn-sm"
+                      onClick={() => handleUpdateRequest(req._id, 'rejected')}
+                      disabled={updatingId === req._id}>Decline</button>
+                  </div>
                 </div>
-
-                <div className="card-price">${req.expertise?.price}</div>
-
-                <div className="card-footer">
-                  <span className="status-badge status-pending">{req.status}</span>
-                  <button
-                    className="btn btn-success btn-sm"
-                    onClick={() => handleUpdateRequest(req._id, 'accepted')}
-                    disabled={updatingId === req._id}
-                  >
-                    Accept
-                  </button>
-                  <button
-                    className="btn btn-danger btn-sm"
-                    onClick={() => handleUpdateRequest(req._id, 'rejected')}
-                    disabled={updatingId === req._id}
-                  >
-                    Decline
-                  </button>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
 
+      {/* ── Request history ── */}
       {showHistory && (
         <div className="section">
           <p className="section-title">Request history</p>
           {historyLoading && <p className="loading-text">Loading history…</p>}
-          {historyError && <div className="alert alert-error">{historyError}</div>}
+          {historyError  && <div className="alert alert-error">{historyError}</div>}
 
           {!historyLoading && !historyError && (
             <div className="grid">
@@ -277,27 +295,32 @@ export default function TeacherDashboard() {
                   <p>No processed requests yet.</p>
                 </div>
               )}
-
-              {history.map((req) => (
-                <div key={req._id} className="card">
-                  <div className="card-title">{req.expertise?.title}</div>
-                  <div className="card-meta">
-                    <span><strong>Student</strong> {req.student?.name}</span>
-                    <span>{req.student?.email}</span>
+              {history.map((req) => {
+                const studentOnline = isOnline(req.student?._id)
+                return (
+                  <div key={req._id} className="card">
+                    <div className="card-title">{req.expertise?.title}</div>
+                    <div className="card-meta">
+                      <span>
+                        <span className={`presence-dot ${studentOnline ? 'online' : 'offline'}`} />
+                        <strong>Student</strong> {req.student?.name}
+                      </span>
+                      <span>{req.student?.email}</span>
+                    </div>
+                    <div className="card-price">${req.expertise?.price}</div>
+                    <div className="card-footer">
+                      <span className={`status-badge ${req.status === 'accepted' ? 'status-accepted' : 'status-rejected'}`}>
+                        {req.status}
+                      </span>
+                      {req.status === 'accepted' && req.conversationId && (
+                        <Link to={`/chat/${req.conversationId}`} className="btn btn-outline btn-sm">
+                          Open chat
+                        </Link>
+                      )}
+                    </div>
                   </div>
-                  <div className="card-price">${req.expertise?.price}</div>
-                  <div className="card-footer">
-                    <span className={`status-badge ${req.status === 'accepted' ? 'status-accepted' : 'status-rejected'}`}>
-                      {req.status}
-                    </span>
-                    {req.status === 'accepted' && req.conversationId && (
-                      <Link to={`/chat/${req.conversationId}`} className="btn btn-outline btn-sm">
-                        Open chat
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

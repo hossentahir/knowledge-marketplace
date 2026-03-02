@@ -446,6 +446,93 @@
 }
 .empty-state p { font-size: 0.875rem; }
 
+/* ─── Presence dot ─────────────────────────────────────────── */
+
+.presence-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  vertical-align: middle;
+  margin-right: 0.3rem;
+  position: relative;
+  top: -1px;
+}
+.presence-dot.online {
+  background: var(--clr-success);
+  box-shadow: 0 0 0 2px var(--clr-success-soft);
+}
+.presence-dot.offline { background: #94a3b8; }
+
+/* ─── Presence panel (users list) ──────────────────────────── */
+
+.presence-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.presence-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.65rem 1.1rem;
+  font-size: 0.875rem;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+}
+.presence-item:last-child { border-bottom: none; }
+.presence-item:hover { background: var(--clr-primary-soft); }
+
+.presence-item.offline-item { opacity: 0.65; }
+
+.presence-item-name {
+  font-weight: 600;
+  color: var(--text);
+}
+.presence-item-email {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-left: auto;
+  padding-left: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+.presence-online-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--clr-success);
+  margin-left: 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+/* ─── Count badge on section title ─────────────────────────── */
+
+.presence-count-badge {
+  margin-left: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: var(--clr-success-soft);
+  color: var(--clr-success);
+  border-radius: 99px;
+  padding: 0.15em 0.6em;
+  letter-spacing: 0.02em;
+}
+
+/* ─── Navbar user with presence dot ────────────────────────── */
+
+.navbar-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
 /* ─── Loading skeleton pulse ───────────────────────────────── */
 
 .loading-text {

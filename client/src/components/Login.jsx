@@ -1,15 +1,19 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useSocket } from '../context/SocketContext'
 
 export default function Login() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { connectSocket } = useSocket()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+
+  // Shown when user lands here after a successful password reset
+  const resetSuccess = location.state?.resetSuccess
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -49,6 +53,11 @@ export default function Login() {
           <p className="auth-brand-sub">Sign in to your account to continue</p>
         </div>
 
+        {resetSuccess && (
+          <div className="alert alert-success">
+            Password reset successfully — sign in with your new password.
+          </div>
+        )}
         {error && <div className="alert alert-error">{error}</div>}
 
         <form onSubmit={handleSubmit}>
@@ -66,7 +75,10 @@ export default function Login() {
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="password">Password</label>
+            <div className="form-label-row">
+              <label className="form-label" htmlFor="password">Password</label>
+              <Link to="/forgot-password" className="form-label-link">Forgot password?</Link>
+            </div>
             <input
               id="password"
               className="form-control"

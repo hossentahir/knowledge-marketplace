@@ -277,6 +277,19 @@
   border-top: 1px solid var(--border);
 }
 
+/* Label row: label left, small link right */
+.form-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.form-label-link {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--clr-primary);
+}
+.form-label-link:hover { color: var(--clr-primary-hover); }
+
 /* ─── Main content layout ──────────────────────────────────── */
 
 .main-content {

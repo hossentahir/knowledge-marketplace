@@ -10,7 +10,9 @@ export default function Navbar() {
   const user = JSON.parse(localStorage.getItem('user') || 'null')
   const isAuth = !!token
 
-  const isAuthPage = ['/login', '/register'].includes(location.pathname)
+  const isAuthPage =
+    ['/login', '/register', '/forgot-password'].includes(location.pathname) ||
+    location.pathname.startsWith('/reset-password')
   if (isAuthPage) return null
 
   const dashboardPath = user?.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useSocket } from '../context/SocketContext'
+import { API_URL } from '../api'
 
 export default function SearchPage() {
   const { isOnline } = useSocket()
@@ -21,7 +22,7 @@ export default function SearchPage() {
       const token = localStorage.getItem('token')
       if (!token) throw new Error('You must be logged in as a student to search')
       const res = await fetch(
-        `http://localhost:5000/api/expertise/search?query=${encodeURIComponent(query)}`,
+        `${API_URL}/api/expertise/search?query=${encodeURIComponent(query)}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -45,7 +46,7 @@ export default function SearchPage() {
     try {
       const token = localStorage.getItem('token')
       if (!token) throw new Error('You must be logged in to request a topic')
-      const res = await fetch('http://localhost:5000/api/topic-request', {
+      const res = await fetch(`${API_URL}/api/topic-request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

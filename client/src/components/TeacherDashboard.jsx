@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useSocket } from '../context/SocketContext'
+import { API_URL } from '../api'
 
 export default function TeacherDashboard() {
   const { isOnline } = useSocket()
@@ -33,7 +34,7 @@ export default function TeacherDashboard() {
     setRequestsLoading(true)
     setRequestsError(null)
     try {
-      const res = await fetch('http://localhost:5000/api/topic-request/teacher', {
+      const res = await fetch(`${API_URL}/api/topic-request/teacher`, {
         headers: { Authorization: `Bearer ${token()}` },
       })
       const data = await res.json()
@@ -50,7 +51,7 @@ export default function TeacherDashboard() {
     setHistoryLoading(true)
     setHistoryError(null)
     try {
-      const res = await fetch('http://localhost:5000/api/topic-request/teacher/history', {
+      const res = await fetch(`${API_URL}/api/topic-request/teacher/history`, {
         headers: { Authorization: `Bearer ${token()}` },
       })
       const data = await res.json()
@@ -66,7 +67,7 @@ export default function TeacherDashboard() {
   const fetchStudents = async () => {
     setStudentsLoading(true)
     try {
-      const res = await fetch('http://localhost:5000/api/users?role=student', {
+      const res = await fetch(`${API_URL}/api/users?role=student`, {
         headers: { Authorization: `Bearer ${token()}` },
       })
       const data = await res.json()
@@ -89,7 +90,7 @@ export default function TeacherDashboard() {
   const handleUpdateRequest = async (id, status) => {
     setUpdatingId(id)
     try {
-      const res = await fetch(`http://localhost:5000/api/topic-request/${id}`, {
+      const res = await fetch(`${API_URL}/api/topic-request/${id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -120,7 +121,7 @@ export default function TeacherDashboard() {
     setFormError(null)
     setFormSuccess(null)
     try {
-      const res = await fetch('http://localhost:5000/api/expertise', {
+      const res = await fetch(`${API_URL}/api/expertise`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -8,12 +8,22 @@ const connectDB = require('./config/db');
 
 const app = express();
 const server = http.createServer(app);
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
-// ── Socket.io ────────────────────────────────────────────────
+// ── CORS origin ──────────────────────────────────────────────────────────────
+// Reads from FRONTEND_URL env var so production never needs a code change.
+// Falls back to localhost for local development convenience.
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+// ── Production safety checks ─────────────────────────────────────────────────
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  console.warn('[WARN] JWT_SECRET is not set. Set it in your environment variables.');
+}
+
+// ── Socket.io ────────────────────────────────────────────────────────────────
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:5173',
+    origin: FRONTEND_URL,
     methods: ['GET', 'POST'],
   },
 });
@@ -42,9 +52,9 @@ io.on('connection', (socket) => {
   });
 });
 
-// ── Express middleware ───────────────────────────────────────
+// ── Express middleware ───────────────────────────────────────────────────────
 app.use(helmet());
-app.use(cors({ origin: 'http://localhost:5173' }));
+app.use(cors({ origin: FRONTEND_URL }));
 app.use(express.json());
 
 app.use((req, res, next) => {
@@ -56,7 +66,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ── Routes ───────────────────────────────────────────────────
+// ── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api/auth',          require('./routes/auth'));
 app.use('/api/dashboard',     require('./routes/dashboard'));
 app.use('/api/expertise',     require('./routes/expertise'));
@@ -67,9 +77,9 @@ app.use('/api/conversations', require('./routes/conversations'));
 app.use('/api/profile',       require('./routes/profile'));
 app.use('/api/users',         require('./routes/users'));
 
-app.get('/api/health', (_req, res) => res.json({ message: 'Backend is running' }));
+app.get('/api/health', (_req, res) => res.json({ status: 'ok', message: 'Backend is running' }));
 
-// ── Start ────────────────────────────────────────────────────
+// ── Start ────────────────────────────────────────────────────────────────────
 const startServer = async () => {
   try {
     await connectDB();

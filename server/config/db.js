@@ -1,4 +1,9 @@
 const mongoose = require('mongoose');
+const dns = require('dns');
+
+// Node.js on Windows can default to 127.0.0.1 as DNS resolver, which cannot
+// resolve MongoDB Atlas SRV records.  Override with reliable public resolvers.
+dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
 
 const connectDB = async () => {
   if (!process.env.MONGO_URI) {

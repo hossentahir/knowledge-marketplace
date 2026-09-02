@@ -93,7 +93,8 @@ router.post('/forgot-password', async (req, res) => {
     user.resetPasswordExpire = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
     await user.save({ validateModifiedOnly: true });
 
-    const resetUrl = `http://localhost:5173/reset-password/${rawToken}`;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetUrl = `${frontendUrl}/reset-password/${rawToken}`;
 
     // In production replace this with an actual email service
     console.log('─────────────────────────────────────────');

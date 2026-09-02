@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useSocket } from '../context/SocketContext'
+import { API_URL } from '../api'
 
 export default function StudentDashboard() {
   const { isOnline } = useSocket()
@@ -25,7 +26,7 @@ export default function StudentDashboard() {
     setExpertiseLoading(true)
     setExpertiseError(null)
     try {
-      const res = await fetch('http://localhost:5000/api/expertise/search?query=', {
+      const res = await fetch(`${API_URL}/api/expertise/search?query=`, {
         headers: { Authorization: `Bearer ${token()}` },
       })
       const data = await res.json()
@@ -41,7 +42,7 @@ export default function StudentDashboard() {
   const fetchMyRequests = async () => {
     setRequestsLoading(true)
     try {
-      const res = await fetch('http://localhost:5000/api/topic-request/student/history', {
+      const res = await fetch(`${API_URL}/api/topic-request/student/history`, {
         headers: { Authorization: `Bearer ${token()}` },
       })
       const data = await res.json()
@@ -56,7 +57,7 @@ export default function StudentDashboard() {
   const fetchTeachers = async () => {
     setTeachersLoading(true)
     try {
-      const res = await fetch('http://localhost:5000/api/users?role=teacher', {
+      const res = await fetch(`${API_URL}/api/users?role=teacher`, {
         headers: { Authorization: `Bearer ${token()}` },
       })
       const data = await res.json()
@@ -78,7 +79,7 @@ export default function StudentDashboard() {
     setExpertiseError(null)
     setRequestingId(expertiseId)
     try {
-      const res = await fetch('http://localhost:5000/api/topic-request', {
+      const res = await fetch(`${API_URL}/api/topic-request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { API_URL } from '../api'
 
 export default function ChatPage() {
   const { conversationId } = useParams()
@@ -19,7 +20,7 @@ export default function ChatPage() {
 
   const fetchConversation = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/conversations/${conversationId}`, {
+      const res = await fetch(`${API_URL}/api/conversations/${conversationId}`, {
         headers: { Authorization: `Bearer ${token()}` },
       })
       const data = await res.json()
@@ -33,7 +34,7 @@ export default function ChatPage() {
   const fetchMessages = async (silent = false) => {
     if (!silent) setLoading(true)
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${conversationId}`, {
+      const res = await fetch(`${API_URL}/api/messages/${conversationId}`, {
         headers: { Authorization: `Bearer ${token()}` },
       })
       const data = await res.json()
@@ -64,7 +65,7 @@ export default function ChatPage() {
     setSending(true)
     setError(null)
     try {
-      const res = await fetch('http://localhost:5000/api/messages', {
+      const res = await fetch(`${API_URL}/api/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
